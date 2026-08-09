@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IELTS Daily Checklist & Progress Planner - Google Sheets Style</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        sheet: {
+                            header: '#f8f9fa',
+                            border: '#e0e0e0',
+                            activeTab: '#ffffff',
+                            hoverTab: '#f1f3f4',
+                            grid: '#e2e8f0',
+                        },
+                        reading: {
+                            light: '#ecfdf5',
+                            border: '#10b981',
+                            badge: '#059669',
+                            dark: '#047857'
+                        },
+                        listening: {
+                            light: '#eff6ff',
+                            border: '#3b82f6',
+                            badge: '#2563eb',
+                            dark: '#1d4ed8'
+                        },
+                        writing: {
+                            light: '#fffbe1',
+                            border: '#f59e0b',
+                            badge: '#d97706',
+                            dark: '#b45309'
+                        },
+                        speaking: {
+                            light: '#fff1f2',
+                            border: '#f43f5e',
+                            badge: '#e11d48',
+                            dark: '#be123c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .sheet-table th, .sheet-table td { border: 1px solid #e2e8f0; }
+        .sheet-table th { background-color: #f8fafc; font-weight: 600; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .tab-btn.active { border-bottom: 3px solid #1a73e8; color: #1a73e8; font-weight: 600; background-color: #ffffff; }
+        .tab-btn-reading.active { border-bottom-color: #10b981; color: #047857; }
+        .tab-btn-listening.active { border-bottom-color: #3b82f6; color: #1d4ed8; }
+        .tab-btn-writing.active { border-bottom-color: #f59e0b; color: #b45309; }
+        .tab-btn-speaking.active { border-bottom-color: #f43f5e; color: #be123c; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-gray-800">
+
+    <!-- Top Google Sheets Toolbar Header -->
+    <header class="bg-white border-b border-gray-200 px-4 py-2 flex flex-wrap items-center justify-between gap-2 shadow-sm z-10">
+        <div class="flex items-center space-x-3">
+            <div class="bg-emerald-600 text-white p-2 rounded-lg flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-file-spreadsheet text-xl"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="text-lg font-bold text-gray-800 tracking-tight">IELTS Daily Checklist & Planner</h1>
+                    <span class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-medium"><i class="fa-solid fa-cloud-check text-xs mr-1"></i> Auto-Saved</span>
+                </div>
+                <div class="flex items-center text-xs text-gray-500 space-x-3 mt-0.5">
+                    <span>Mục tiêu Band: <strong class="text-gray-700">7.5+</strong></span>
+                    <span>•</span>
+                    <span>Chế độ: <strong class="text-gray-700">Luyện tập hàng ngày</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center space-x-2">
+            <button onclick="openAddTaskModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium px-3 py-2 rounded-md transition shadow-sm flex items-center space-x-1">
+                <i class="fa-solid fa-plus"></i>
+                <span>Thêm Công Việc</span>
+            </button>
+            <button onclick="resetDataToDefault()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-2 rounded-md transition border border-gray-300 flex items-center space-x-1">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Đặt Lại</span>
+            </button>
+            <button onclick="exportToCSV()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium px-3 py-2 rounded-md transition border border-blue-200 flex items-center space-x-1">
+                <i class="fa-solid fa-file-export"></i>
+                <span>Xuất CSV</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Formula Bar Simulation -->
+    <div class="bg-gray-50 border-b border-gray-200 px-4 py-1.5 flex items-center space-x-3 text-xs text-gray-600">
+        <div class="font-mono bg-white px-2 py-1 rounded border border-gray-300 font-semibold text-gray-700 min-w-[70px] text-center" id="cell-address">
+            Fx = SUM
+        </div>
+        <div class="text-gray-400 font-bold">fx</div>
+        <div class="flex-1 bg-white px-3 py-1 rounded border border-gray-300 font-mono text-gray-700 truncate" id="formula-bar-display">
+            =COUNTIF(Checklist_Completed, TRUE) / COUNTA(Total_Tasks) * 100%
+        </div>
+        <div class="flex items-center space-x-2 text-xs">
+            <span class="text-gray-500">Lọc ngày:</span>
+            <input type="date" id="date-filter" onchange="filterByDate()" class="bg-white border border-gray-300 text-xs rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+        </div>
+    </div>
+
+    <!-- Main Content Container (Dynamic Sheets Container) -->
+    <main class="flex-1 overflow-auto custom-scrollbar p-4 bg-gray-100">
+        <div class="max-w-7xl mx-auto space-y-4">
+
+            <!-- ================= PAGE 1: DASHBOARD / OVERVIEW ================= -->
+            <div id="tab-overview" class="tab-content space-y-4">
+                
+                <!-- KPI Stat Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-indigo-600 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Tổng Tiến Độ</p>
+                            <h3 class="text-2xl font-bold text-indigo-900 mt-1" id="overall-progress-text">0%</h3>
+                            <p class="text-xs text-indigo-600 mt-0.5" id="overall-completed-count">0/0 Đã xong</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 text-xl font-bold">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-emerald-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Reading</p>
+                            <h3 class="text-2xl font-bold text-emerald-800 mt-1" id="kpi-reading-pct">0%</h3>
+                            <p class="text-xs text-emerald-600 mt-0.5" id="kpi-reading-count">0 bài tập</p>
+                        </div>
+                        <div class="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 text-lg">
+                            <i class="fa-solid fa-book-open"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-blue-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Listening</p>
+                            <h3 class="text-2xl font-bold text-blue-800 mt-1" id="kpi-listening-pct">0%</h3>
+                            <p class="text-xs text-blue-600 mt-0.5" id="kpi-listening-count">0 bài tập</p>
+                        </div>
+                        <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 text-lg">
+                            <i class="fa-solid fa-headphones"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-amber-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Writing</p>
+                            <h3 class="text-2xl font-bold text-amber-800 mt-1" id="kpi-writing-pct">0%</h3>
+                            <p class="text-xs text-amber-600 mt-0.5" id="kpi-writing-count">0 bài tập</p>
+                        </div>
+                        <div class="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 text-lg">
+                            <i class="fa-solid fa-pen-nib"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-rose-500 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Speaking</p>
+                            <h3 class="text-2xl font-bold text-rose-800 mt-1" id="kpi-speaking-pct">0%</h3>
+                            <p class="text-xs text-rose-600 mt-0.5" id="kpi-speaking-count">0 bài tập</p>
+                        </div>
+                        <div class="w-10 h-10 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 text-lg">
+                            <i class="fa-solid fa-comments"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Visualizations Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                    
+                    <!-- Skill Progress Bar Chart -->
+                    <div class="lg:col-span-7 bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-gray-800 text-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-column text-indigo-600"></i>
+                                <span>Mức Độ Hoàn Thành Theo Kỹ Năng (%)</span>
+                            </h3>
+                            <span class="text-xs text-gray-400">Google Sheet Charts Engine</span>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="skillsBarChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Radar Balance Skill Chart -->
+                    <div class="lg:col-span-5 bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-gray-800 text-sm flex items-center space-x-2">
+                                <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                                <span>Cân Bằng Thời Lượng Hàng Ngày</span>
+                            </h3>
+                            <span class="text-xs text-gray-400">Target Radar</span>
+                        </div>
+                        <div class="h-64 relative flex justify-center items-center">
+                            <canvas id="skillsRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Summary Table by Skill -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="px-5 py-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-list-check text-emerald-600"></i>
+                            <span>Bảng Báo Cáo Chi Tiết Trạng Thái 4 Kỹ Năng</span>
+                        </h3>
+                        <span class="text-xs bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full font-medium">Auto Computed</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sheet-table">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase font-bold text-[11px]">
+                                    <th class="p-3">Kỹ Năng (Skill)</th>
+                                    <th class="p-3">Tổng Việc</th>
+                                    <th class="p-3">Hoàn Thành</th>
+                                    <th class="p-3">Đang Làm</th>
+                                    <th class="p-3">Chưa Bắt Đầu</th>
+                                    <th class="p-3 min-w-[180px]">Thanh Tiến Độ (Progress Bar)</th>
+                                    <th class="p-3 text-center">Tỷ Lệ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overview-table-body" class="divide-y divide-gray-200">
+                                <!-- Dynamic JS Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Daily Top Priority Focus Checklist -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-gray-800 text-sm flex items-center space-x-2">
+                            <i class="fa-solid fa-bullseye text-red-500"></i>
+                            <span>Nhiệm Vụ Cần Ưu Tiên Hoàn Thành Hôm Nay</span>
+                        </h3>
+                        <span class="text-xs text-gray-500">Tự động trích xuất từ 4 trang kỹ năng</span>
+                    </div>
+                    <div id="todays-priority-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- Dynamic priority items injected here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ================= PAGE 2: READING SHEET ================= -->
+            <div id="tab-reading" class="tab-content hidden space-y-4">
+                
+                <!-- Skill Header Banner -->
+                <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-xl p-5 text-white shadow-sm flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-book-open text-2xl"></i>
+                            <h2 class="text-xl font-bold">Kỹ Năng READING (Đọc Hiểu)</h2>
+                        </div>
+                        <p class="text-emerald-100 text-xs mt-1">Luyện tập Reading Passage 1, 2, 3 • Từ vựng Skimming & Scanning • Chữa lỗi sai Chi tiết</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-right">
+                        <span class="text-xs text-emerald-100 block">Tiến độ Reading</span>
+                        <span class="text-2xl font-bold" id="reading-sheet-pct">0%</span>
+                    </div>
+                </div>
+
+                <!-- Skill Table Container -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-3 bg-emerald-50/50 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="font-semibold text-emerald-800"><i class="fa-solid fa-filter mr-1"></i> Trạng thái:</span>
+                            <select onchange="filterSkillTable('reading')" id="reading-status-filter" class="bg-white border border-gray-300 rounded px-2 py-1 text-xs focus:ring-emerald-500 focus:outline-none">
+                                <option value="ALL">Tất cả</option>
+                                <option value="DONE">Đã xong</option>
+                                <option value="IN_PROGRESS">Đang làm</option>
+                                <option value="TODO">Chưa làm</option>
+                            </select>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            Gợi ý: Đánh dấu tick <i class="fa-regular fa-square-check text-emerald-600 font-bold"></i> để tính điểm tự động
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sheet-table">
+                            <thead>
+                                <tr class="bg-emerald-100/60 text-emerald-900 font-bold uppercase text-[11px]">
+                                    <th class="p-3 text-center w-12">Tick</th>
+                                    <th class="p-3 min-w-[100px]">Ngày Thực Hiện</th>
+                                    <th class="p-3 min-w-[180px]">Nội Dung Bài Học / Đề Thi</th>
+                                    <th class="p-3 min-w-[130px]">Dạng Bài (Question Type)</th>
+                                    <th class="p-3 min-w-[100px]">Mục Tiêu Score</th>
+                                    <th class="p-3 min-w-[100px]">Thời Gian (Phút)</th>
+                                    <th class="p-3 min-w-[120px]">Trạng Thái</th>
+                                    <th class="p-3 min-w-[200px]">Ghi Chú / Chữa Từ Vựng</th>
+                                    <th class="p-3 text-center w-20">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reading-table-body" class="divide-y divide-gray-200">
+                                <!-- Dynamic Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 3: LISTENING SHEET ================= -->
+            <div id="tab-listening" class="tab-content hidden space-y-4">
+                
+                <!-- Skill Header Banner -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-5 text-white shadow-sm flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-headphones text-2xl"></i>
+                            <h2 class="text-xl font-bold">Kỹ Năng LISTENING (Nghe Hiểu)</h2>
+                        </div>
+                        <p class="text-blue-100 text-xs mt-1">Luyện Part 1-4 • Chép chính tả Dictation • Shadowing phát âm & Nghe phản xạ</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-right">
+                        <span class="text-xs text-blue-100 block">Tiến độ Listening</span>
+                        <span class="text-2xl font-bold" id="listening-sheet-pct">0%</span>
+                    </div>
+                </div>
+
+                <!-- Skill Table Container -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-3 bg-blue-50/50 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="font-semibold text-blue-800"><i class="fa-solid fa-filter mr-1"></i> Trạng thái:</span>
+                            <select onchange="filterSkillTable('listening')" id="listening-status-filter" class="bg-white border border-gray-300 rounded px-2 py-1 text-xs focus:ring-blue-500 focus:outline-none">
+                                <option value="ALL">Tất cả</option>
+                                <option value="DONE">Đã xong</option>
+                                <option value="IN_PROGRESS">Đang làm</option>
+                                <option value="TODO">Chưa làm</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sheet-table">
+                            <thead>
+                                <tr class="bg-blue-100/60 text-blue-900 font-bold uppercase text-[11px]">
+                                    <th class="p-3 text-center w-12">Tick</th>
+                                    <th class="p-3 min-w-[100px]">Ngày Thực Hiện</th>
+                                    <th class="p-3 min-w-[180px]">Nội Dung / Nguồn Nghe</th>
+                                    <th class="p-3 min-w-[130px]">Dạng Bài / Part</th>
+                                    <th class="p-3 min-w-[100px]">Mục Tiêu Score</th>
+                                    <th class="p-3 min-w-[100px]">Thời Gian (Phút)</th>
+                                    <th class="p-3 min-w-[120px]">Trạng Thái</th>
+                                    <th class="p-3 min-w-[200px]">Ghi Chú / Từ Cần Luyện Nghe</th>
+                                    <th class="p-3 text-center w-20">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listening-table-body" class="divide-y divide-gray-200">
+                                <!-- Dynamic Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 4: WRITING SHEET ================= -->
+            <div id="tab-writing" class="tab-content hidden space-y-4">
+                
+                <!-- Skill Header Banner -->
+                <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl p-5 text-white shadow-sm flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-pen-nib text-2xl"></i>
+                            <h2 class="text-xl font-bold">Kỹ Năng WRITING (Viết Bài)</h2>
+                        </div>
+                        <p class="text-amber-100 text-xs mt-1">Luyện Task 1 (Charts, Map, Process) & Task 2 (Essays) • Outline Ý tưởng • Sửa lỗi Grammarly & AI</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-right">
+                        <span class="text-xs text-amber-100 block">Tiến độ Writing</span>
+                        <span class="text-2xl font-bold" id="writing-sheet-pct">0%</span>
+                    </div>
+                </div>
+
+                <!-- Skill Table Container -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-3 bg-amber-50/50 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="font-semibold text-amber-800"><i class="fa-solid fa-filter mr-1"></i> Trạng thái:</span>
+                            <select onchange="filterSkillTable('writing')" id="writing-status-filter" class="bg-white border border-gray-300 rounded px-2 py-1 text-xs focus:ring-amber-500 focus:outline-none">
+                                <option value="ALL">Tất cả</option>
+                                <option value="DONE">Đã xong</option>
+                                <option value="IN_PROGRESS">Đang làm</option>
+                                <option value="TODO">Chưa làm</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sheet-table">
+                            <thead>
+                                <tr class="bg-amber-100/60 text-amber-900 font-bold uppercase text-[11px]">
+                                    <th class="p-3 text-center w-12">Tick</th>
+                                    <th class="p-3 min-w-[100px]">Ngày Thực Hiện</th>
+                                    <th class="p-3 min-w-[180px]">Chủ Đề Viết (Topic)</th>
+                                    <th class="p-3 min-w-[130px]">Phân Loại (Task 1 / Task 2)</th>
+                                    <th class="p-3 min-w-[100px]">Số Từ (Word Count)</th>
+                                    <th class="p-3 min-w-[100px]">Thời Gian (Phút)</th>
+                                    <th class="p-3 min-w-[120px]">Trạng Thái</th>
+                                    <th class="p-3 min-w-[200px]">Ghi Chú Structure & Collocations</th>
+                                    <th class="p-3 text-center w-20">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="writing-table-body" class="divide-y divide-gray-200">
+                                <!-- Dynamic Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= PAGE 5: SPEAKING SHEET ================= -->
+            <div id="tab-speaking" class="tab-content hidden space-y-4">
+                
+                <!-- Skill Header Banner -->
+                <div class="bg-gradient-to-r from-rose-500 to-pink-600 rounded-xl p-5 text-white shadow-sm flex flex-wrap justify-between items-center gap-4">
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-comments text-2xl"></i>
+                            <h2 class="text-xl font-bold">Kỹ Năng SPEAKING (Nói & Phản Xạ)</h2>
+                        </div>
+                        <p class="text-rose-100 text-xs mt-1">Luyện Part 1, Part 2 (Cue Card), Part 3 • Thu âm Ghi Âm Tự Chữa • Luyện Idioms & Lexical Resource</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 text-right">
+                        <span class="text-xs text-rose-100 block">Tiến độ Speaking</span>
+                        <span class="text-2xl font-bold" id="speaking-sheet-pct">0%</span>
+                    </div>
+                </div>
+
+                <!-- Skill Table Container -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-3 bg-rose-50/50 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="font-semibold text-rose-800"><i class="fa-solid fa-filter mr-1"></i> Trạng thái:</span>
+                            <select onchange="filterSkillTable('speaking')" id="speaking-status-filter" class="bg-white border border-gray-300 rounded px-2 py-1 text-xs focus:ring-rose-500 focus:outline-none">
+                                <option value="ALL">Tất cả</option>
+                                <option value="DONE">Đã xong</option>
+                                <option value="IN_PROGRESS">Đang làm</option>
+                                <option value="TODO">Chưa làm</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs sheet-table">
+                            <thead>
+                                <tr class="bg-rose-100/60 text-rose-900 font-bold uppercase text-[11px]">
+                                    <th class="p-3 text-center w-12">Tick</th>
+                                    <th class="p-3 min-w-[100px]">Ngày Thực Hiện</th>
+                                    <th class="p-3 min-w-[180px]">Chủ Đề Nói (Topic / Forecast)</th>
+                                    <th class="p-3 min-w-[130px]">Phần Thi (Part 1/2/3)</th>
+                                    <th class="p-3 min-w-[100px]">Thu Âm (Record)</th>
+                                    <th class="p-3 min-w-[100px]">Thời Gian (Phút)</th>
+                                    <th class="p-3 min-w-[120px]">Trạng Thái</th>
+                                    <th class="p-3 min-w-[200px]">Ghi Chú Fluency & Vocabulary</th>
+                                    <th class="p-3 text-center w-20">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="speaking-table-body" class="divide-y divide-gray-200">
+                                <!-- Dynamic Injection -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Bottom Google Sheets Tab Navigation Bar -->
+    <footer class="bg-gray-200 border-t border-gray-300 flex items-center justify-between px-2 py-1 select-none text-xs">
+        <div class="flex items-center space-x-1 overflow-x-auto custom-scrollbar pr-4">
+            
+            <button onclick="switchTab('overview')" id="tab-btn-overview" class="tab-btn active px-4 py-1.5 rounded-t-md font-medium text-gray-700 hover:bg-white/60 transition flex items-center space-x-2 shadow-sm">
+                <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                <span>📊 TỔNG QUAN (Summary)</span>
+            </button>
+
+            <button onclick="switchTab('reading')" id="tab-btn-reading" class="tab-btn tab-btn-reading px-4 py-1.5 rounded-t-md font-medium text-gray-700 hover:bg-white/60 transition flex items-center space-x-2">
+                <i class="fa-solid fa-book-open text-emerald-600"></i>
+                <span>📖 READING</span>
+            </button>
+
+            <button onclick="switchTab('listening')" id="tab-btn-listening" class="tab-btn tab-btn-listening px-4 py-1.5 rounded-t-md font-medium text-gray-700 hover:bg-white/60 transition flex items-center space-x-2">
+                <i class="fa-solid fa-headphones text-blue-600"></i>
+                <span>🎧 LISTENING</span>
+            </button>
+
+            <button onclick="switchTab('writing')" id="tab-btn-writing" class="tab-btn tab-btn-writing px-4 py-1.5 rounded-t-md font-medium text-gray-700 hover:bg-white/60 transition flex items-center space-x-2">
+                <i class="fa-solid fa-pen-nib text-amber-600"></i>
+                <span>✍️ WRITING</span>
+            </button>
+
+            <button onclick="switchTab('speaking')" id="tab-btn-speaking" class="tab-btn tab-btn-speaking px-4 py-1.5 rounded-t-md font-medium text-gray-700 hover:bg-white/60 transition flex items-center space-x-2">
+                <i class="fa-solid fa-comments text-rose-600"></i>
+                <span>🗣️ SPEAKING</span>
+            </button>
+
+        </div>
+
+        <div class="hidden md:flex items-center space-x-2 text-gray-500 text-[11px] pr-2">
+            <span>5 Worksheets Total</span>
+            <span>•</span>
+            <span id="sheet-status-indicator">READY</span>
+        </div>
+    </footer>
+
+    <!-- Add Task Modal -->
+    <div id="add-task-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 transform transition-all">
+            <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center space-x-2">
+                    <i class="fa-solid fa-plus-circle text-emerald-400"></i>
+                    <span>Thêm Công Việc IELTS Mới</span>
+                </h3>
+                <button onclick="closeAddTaskModal()" class="text-gray-400 hover:text-white text-base">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="add-task-form" onsubmit="handleAddTask(event)" class="p-5 space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Kỹ Năng (Worksheet Tab)</label>
+                    <select id="modal-skill" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="reading">📖 Reading</option>
+                        <option value="listening">🎧 Listening</option>
+                        <option value="writing">✍️ Writing</option>
+                        <option value="speaking">🗣️ Speaking</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Nội Dung Bài Học / Chủ Đề</label>
+                    <input type="text" id="modal-title" required placeholder="Ví dụ: Cam 18 Test 1 Passage 1 hoặc IELTS Writing Task 2 Topic Education" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Dạng Bài / Part</label>
+                        <input type="text" id="modal-category" placeholder="Matching Headings, Task 2..." class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Mục Tiêu Score / Record</label>
+                        <input type="text" id="modal-target" placeholder="30/40 hoặc 250 words" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Ngày Luyện Tập</label>
+                        <input type="date" id="modal-date" required class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Thời Gian Dự Kiến (Phút)</label>
+                        <input type="number" id="modal-duration" value="45" min="5" max="300" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Trạng Thái Ban Đầu</label>
+                    <select id="modal-status" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="TODO">Chưa làm (To-do)</option>
+                        <option value="IN_PROGRESS">Đang làm (In Progress)</option>
+                        <option value="DONE">Đã xong (Completed)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Ghi Chú Từ Vựng / Chú Ý</label>
+                    <textarea id="modal-notes" rows="2" placeholder="Ghi lại các collocations hoặc cấu trúc quan trọng..." class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button type="button" onclick="closeAddTaskModal()" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium">Hủy</button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold shadow">Tạo Hàng Tác Vụ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="fixed bottom-12 right-5 bg-gray-900 text-white text-xs px-4 py-2.5 rounded-lg shadow-xl hidden transition-all duration-300 z-50 flex items-center space-x-2 border border-gray-700">
+        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+        <span id="toast-message">Đã cập nhật dữ liệu thành công!</span>
+    </div>
+
+    <script>
+        // Initial Mock Data Store for IELTS Planner
+        const initialPlannerData = {
+            reading: [
+                { id: 'r1', date: getTodayFormatted(0), title: 'Cam 18 Test 1 Passage 1', category: 'True / False / NG', target: '11/13 Cột', duration: 20, completed: true, status: 'DONE', notes: 'Cần chú ý từ đồng nghĩa Synonym key words' },
+                { id: 'r2', date: getTodayFormatted(0), title: 'Cam 18 Test 1 Passage 2', category: 'Matching Headings', target: '10/13 Cột', duration: 25, completed: false, status: 'IN_PROGRESS', notes: 'Ôn kĩ kỹ thuật Skimming đọc câu đầu cuối' },
+                { id: 'r3', date: getTodayFormatted(1), title: 'Cam 18 Test 1 Passage 3', category: 'Multiple Choice', target: '10/14 Cột', duration: 25, completed: false, status: 'TODO', notes: 'Gạch chân từ khóa trong đáp án nhiễu' },
+                { id: 'r4', date: getTodayFormatted(2), title: 'Reading Vocabulary Log Units 1-3', category: 'Vocabulary Review', target: '30 Từ mới', duration: 30, completed: false, status: 'TODO', notes: 'Ghi lại các Collocations chủ đề Environment' }
+            ],
+            listening: [
+                { id: 'l1', date: getTodayFormatted(0), title: 'Cam 18 Test 1 Section 1 & 2', category: 'Form Completion', target: '18/20 Cột', duration: 25, completed: true, status: 'DONE', notes: 'Chú ý đánh vần tên riêng và số điện thoại' },
+                { id: 'l2', date: getTodayFormatted(0), title: 'Dictation 6-Minute English BBC', category: 'Chép chính tả', target: '90% Độ chính xác', duration: 30, completed: true, status: 'DONE', notes: 'Luyện nối âm (Linked Sounds) & Nuốt âm' },
+                { id: 'l3', date: getTodayFormatted(1), title: 'Cam 18 Test 1 Section 3 & 4', category: 'Multiple Choice & Map', target: '15/20 Cột', duration: 30, completed: false, status: 'IN_PROGRESS', notes: 'Map: Xác định rõ mốc điểm xuất phát Start' }
+            ],
+            writing: [
+                { id: 'w1', date: getTodayFormatted(0), title: 'Task 1: Bar Chart Data Comparison', category: 'Task 1 Report', target: '170 words', duration: 20, completed: true, status: 'DONE', notes: 'Dùng cấu trúc "Witnessed a steady increase"' },
+                { id: 'w2', date: getTodayFormatted(1), title: 'Task 2: Essay on Technology in Education', category: 'Opinion Essay', target: '280 words', duration: 40, completed: false, status: 'IN_PROGRESS', notes: 'Lên Outline 2 đoạn Body với Topic Sentence rõ' },
+                { id: 'w3', date: getTodayFormatted(2), title: 'Chữa bài Task 2 bằng AI / Grammarly', category: 'Review & Edit', target: 'Sửa 100% lỗi', duration: 20, completed: false, status: 'TODO', notes: 'Check tiêu chí Coherence & Cohesion' }
+            ],
+            speaking: [
+                { id: 's1', date: getTodayFormatted(0), title: 'Part 1: Hometown & Hobbies Topics', category: 'Part 1 Questions', target: '6 Câu hỏi', duration: 15, completed: true, status: 'DONE', notes: 'Dùng từ nối Furthermore, Honest speaking...' },
+                { id: 's2', date: getTodayFormatted(0), title: 'Part 2: Describe a memorable journey', category: 'Cue Card Part 2', target: 'Nói 2 phút', duration: 20, completed: false, status: 'IN_PROGRESS', notes: 'Thu âm lại & Đánh giá tốc độ trôi chảy' },
+                { id: 's3', date: getTodayFormatted(1), title: 'Part 3: Discussion on Tourism & Environment', category: 'Part 3 Deep Talk', target: '4 Câu hỏi', duration: 20, completed: false, status: 'TODO', notes: 'Học thêm 5 Cụm Idioms tự nhiên' }
+            ]
+        };
+
+        // State Global Variables
+        let plannerData = JSON.parse(localStorage.getItem('ielts_planner_data')) || initialPlannerData;
+        let activeTab = 'overview';
+        let barChartInstance = null;
+        let radarChartInstance = null;
+
+        // Helper date utility
+        function getTodayFormatted(offsetDays = 0) {
+            const d = new Date();
+            d.setDate(d.getDate() + offsetDays);
+            return d.toISOString().split('T')[0];
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set today's date in date filter default
+            document.getElementById('modal-date').value = getTodayFormatted(0);
+            
+            // Initial Full Render
+            renderAllSheets();
+            initCharts();
+        });
+
+        // Switch Sheet Tabs
+        function switchTab(tabName) {
+            activeTab = tabName;
+            
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            // Show selected
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabName}`).classList.add('active');
+
+            // Update formula bar display text according to sheet
+            const formulaBar = document.getElementById('formula-bar-display');
+            const cellAddr = document.getElementById('cell-address');
+
+            if (tabName === 'overview') {
+                cellAddr.textContent = 'Fx = SUM';
+                formulaBar.textContent = '=AVERAGE(Reading_Pct, Listening_Pct, Writing_Pct, Speaking_Pct)';
+            } else {
+                cellAddr.textContent = `A1:${tabName.toUpperCase()}`;
+                formulaBar.textContent = `=FILTER(${tabName.toUpperCase()}_TASKS, Status <> "DONE")`;
+            }
+
+            if (tabName === 'overview') {
+                updateCharts();
+            }
+        }
+
+        function renderAllSheets() {
+            renderOverview();
+            renderSkillSheet('reading');
+            renderSkillSheet('listening');
+            renderSkillSheet('writing');
+            renderSkillSheet('speaking');
+            saveToLocalStorage();
+        }
+
+        // Render Overview Tab & Calculated Formulas
+        function renderOverview() {
+            const skills = ['reading', 'listening', 'writing', 'speaking'];
+            let totalAllTasks = 0;
+            let totalAllCompleted = 0;
+
+            const overviewTbody = document.getElementById('overview-table-body');
+            overviewTbody.innerHTML = '';
+
+            const skillNames = {
+                reading: { title: '📖 Reading', color: 'emerald', border: 'border-emerald-500' },
+                listening: { title: '🎧 Listening', color: 'blue', border: 'border-blue-500' },
+                writing: { title: '✍️ Writing', color: 'amber', border: 'border-amber-500' },
+                speaking: { title: '🗣️ Speaking', color: 'rose', border: 'border-rose-500' }
+            };
+
+            skills.forEach(skill => {
+                const tasks = plannerData[skill] || [];
+                const total = tasks.length;
+                const completed = tasks.filter(t => t.completed || t.status === 'DONE').length;
+                const inProgress = tasks.filter(t => t.status === 'IN_PROGRESS' && !t.completed).length;
+                const todo = tasks.filter(t => t.status === 'TODO' && !t.completed).length;
+                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+                totalAllTasks += total;
+                totalAllCompleted += completed;
+
+                // Update Sheet Banner & KPI Cards
+                document.getElementById(`kpi-${skill}-pct`).textContent = `${pct}%`;
+                document.getElementById(`kpi-${skill}-count`).textContent = `${completed}/${total} Đã xong`;
+                document.getElementById(`${skill}-sheet-pct`).textContent = `${pct}%`;
+
+                // Render Row in Overview Table
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-gray-800 flex items-center space-x-2">
+                        <span>${skillNames[skill].title}</span>
+                    </td>
+                    <td class="p-3 font-mono font-medium">${total}</td>
+                    <td class="p-3 text-emerald-600 font-bold font-mono">${completed}</td>
+                    <td class="p-3 text-amber-600 font-bold font-mono">${inProgress}</td>
+                    <td class="p-3 text-gray-400 font-mono">${todo}</td>
+                    <td class="p-3">
+                        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
+                            <div class="h-3 rounded-full bg-${skillNames[skill].color}-500 transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </td>
+                    <td class="p-3 text-center font-bold font-mono text-gray-700">${pct}%</td>
+                `;
+                overviewTbody.appendChild(tr);
+            });
+
+            // Overall Progress Summary
+            const overallPct = totalAllTasks > 0 ? Math.round((totalAllCompleted / totalAllTasks) * 100) : 0;
+            document.getElementById('overall-progress-text').textContent = `${overallPct}%`;
+            document.getElementById('overall-completed-count').textContent = `${totalAllCompleted}/${totalAllTasks} Đã hoàn thành`;
+
+            // Render Priority Items
+            renderPriorityTasks();
+        }
+
+        // Render Priority Tasks (In Progress or Pending Today)
+        function renderPriorityTasks() {
+            const container = document.getElementById('todays-priority-list');
+            container.innerHTML = '';
+
+            let allPending = [];
+            ['reading', 'listening', 'writing', 'speaking'].forEach(skill => {
+                plannerData[skill].forEach(task => {
+                    if (!task.completed) {
+                        allPending.push({ ...task, skill });
+                    }
+                });
+            });
+
+            if (allPending.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-2 text-center py-6 text-emerald-600 font-medium bg-emerald-50 rounded-lg border border-emerald-200">
+                        <i class="fa-solid fa-circle-check text-xl mb-1 block"></i>
+                        Tuyệt vời! Bạn đã hoàn thành tất cả công việc hôm nay!
+                    </div>
+                `;
+                return;
+            }
+
+            // Show top 4 priority items
+            allPending.slice(0, 4).forEach(item => {
+                const skillBadge = {
+                    reading: 'bg-emerald-100 text-emerald-800',
+                    listening: 'bg-blue-100 text-blue-800',
+                    writing: 'bg-amber-100 text-amber-800',
+                    speaking: 'bg-rose-100 text-rose-800'
+                }[item.skill];
+
+                const div = document.createElement('div');
+                div.className = "border border-gray-200 p-3 rounded-lg flex items-center justify-between bg-gray-50 hover:bg-white transition shadow-sm";
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" onchange="toggleTaskStatus('${item.skill}', '${item.id}')" ${item.completed ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded uppercase ${skillBadge}">${item.skill}</span>
+                                <h4 class="font-semibold text-gray-800 text-xs">${item.title}</h4>
+                            </div>
+                            <p class="text-[11px] text-gray-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${item.duration} phút • ${item.category || 'Luyện tập'}</p>
+                        </div>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-1 rounded ${item.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-800' : 'bg-gray-200 text-gray-600'}">
+                        ${item.status === 'IN_PROGRESS' ? 'Đang làm' : 'Chưa xong'}
+                    </span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderSkillSheet(skill) {
+            const tbody = document.getElementById(`${skill}-table-body`);
+            const filterVal = document.getElementById(`${skill}-status-filter`)?.value || 'ALL';
+            tbody.innerHTML = '';
+
+            let tasks = plannerData[skill] || [];
+
+            // Filter logic
+            if (filterVal === 'DONE') tasks = tasks.filter(t => t.completed || t.status === 'DONE');
+            if (filterVal === 'IN_PROGRESS') tasks = tasks.filter(t => t.status === 'IN_PROGRESS' && !t.completed);
+            if (filterVal === 'TODO') tasks = tasks.filter(t => t.status === 'TODO' && !t.completed);
+
+            if (tasks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center py-6 text-gray-400 italic">Không tìm thấy công việc nào. Hãy thêm công việc mới!</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tasks.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = `hover:bg-gray-50 transition ${item.completed ? 'bg-gray-50/70 opacity-75' : ''}`;
+
+                const statusBadge = {
+                    DONE: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                    IN_PROGRESS: 'bg-amber-100 text-amber-800 border-amber-300',
+                    TODO: 'bg-gray-100 text-gray-600 border-gray-300'
+                }[item.status || 'TODO'];
+
+                const statusText = {
+                    DONE: 'Đã hoàn thành',
+                    IN_PROGRESS: 'Đang thực hiện',
+                    TODO: 'Chưa bắt đầu'
+                }[item.status || 'TODO'];
+
+                tr.innerHTML = `
+                    <td class="p-3 text-center">
+                        <input type="checkbox" onchange="toggleTaskStatus('${skill}', '${item.id}')" ${item.completed ? 'checked' : ''} class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer">
+                    </td>
+                    <td class="p-3 font-mono text-gray-600">${item.date || getTodayFormatted()}</td>
+                    <td class="p-3 font-semibold text-gray-800 ${item.completed ? 'line-through text-gray-500' : ''}">${item.title}</td>
+                    <td class="p-3 text-gray-600"><span class="bg-gray-100 px-2 py-0.5 rounded border border-gray-200">${item.category || 'Luyện tập'}</span></td>
+                    <td class="p-3 font-medium text-indigo-700">${item.target || '-'}</td>
+                    <td class="p-3 font-mono">${item.duration || 30}m</td>
+                    <td class="p-3">
+                        <select onchange="updateTaskStatus('${skill}', '${item.id}', this.value)" class="text-[11px] font-semibold rounded-full px-2.5 py-1 border ${statusBadge} focus:outline-none cursor-pointer">
+                            <option value="TODO" ${item.status === 'TODO' ? 'selected' : ''}>Chưa bắt đầu</option>
+                            <option value="IN_PROGRESS" ${item.status === 'IN_PROGRESS' ? 'selected' : ''}>Đang làm</option>
+                            <option value="DONE" ${item.status === 'DONE' ? 'selected' : ''}>Đã hoàn thành</option>
+                        </select>
+                    </td>
+                    <td class="p-3 text-gray-500 max-w-[200px] truncate" title="${item.notes || ''}">${item.notes || '---'}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="deleteTask('${skill}', '${item.id}')" class="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition" title="Xóa hàng">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function toggleTaskStatus(skill, taskId) {
+            const task = plannerData[skill].find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                task.status = task.completed ? 'DONE' : 'IN_PROGRESS';
+                renderAllSheets();
+                showToast(task.completed ? 'Đã đánh dấu hoàn thành!' : 'Đã chuyển về trạng thái đang làm!');
+            }
+        }
+
+        function updateTaskStatus(skill, taskId, newStatus) {
+            const task = plannerData[skill].find(t => t.id === taskId);
+            if (task) {
+                task.status = newStatus;
+                task.completed = (newStatus === 'DONE');
+                renderAllSheets();
+                showToast(`Đã cập nhật trạng thái: ${newStatus}`);
+            }
+        }
+
+        function deleteTask(skill, taskId) {
+            plannerData[skill] = plannerData[skill].filter(t => t.id !== taskId);
+            renderAllSheets();
+            showToast('Đã xóa hàng công việc!');
+        }
+
+        function filterSkillTable(skill) {
+            renderSkillSheet(skill);
+        }
+
+        // Add Task Logic
+        function openAddTaskModal() {
+            document.getElementById('add-task-modal').classList.remove('hidden');
+        }
+
+        function closeAddTaskModal() {
+            document.getElementById('add-task-modal').classList.add('hidden');
+        }
+
+        function handleAddTask(e) {
+            e.preventDefault();
+            const skill = document.getElementById('modal-skill').value;
+            const title = document.getElementById('modal-title').value.trim();
+            const category = document.getElementById('modal-category').value.trim();
+            const target = document.getElementById('modal-target').value.trim();
+            const date = document.getElementById('modal-date').value;
+            const duration = parseInt(document.getElementById('modal-duration').value) || 30;
+            const status = document.getElementById('modal-status').value;
+            const notes = document.getElementById('modal-notes').value.trim();
+
+            if (!title) return;
+
+            const newTask = {
+                id: 'task_' + Date.now(),
+                date,
+                title,
+                category: category || 'Luyện tập',
+                target: target || 'Standard',
+                duration,
+                completed: (status === 'DONE'),
+                status,
+                notes
+            };
+
+            plannerData[skill].push(newTask);
+            renderAllSheets();
+            closeAddTaskModal();
+            document.getElementById('add-task-form').reset();
+            document.getElementById('modal-date').value = getTodayFormatted(0);
+            showToast('Đã thêm bài tập IELTS mới!');
+        }
+
+        // Filter Entire Planner By Date
+        function filterByDate() {
+            const filterDate = document.getElementById('date-filter').value;
+            if (!filterDate) return;
+
+            showToast(`Đang lọc bài tập cho ngày: ${filterDate}`);
+            // Rerender active sheets
+            renderAllSheets();
+        }
+
+        // Export Data to CSV
+        function exportToCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Skill,Date,Task Title,Category,Target,Duration(mins),Status,Notes\n";
+
+            ['reading', 'listening', 'writing', 'speaking'].forEach(skill => {
+                plannerData[skill].forEach(t => {
+                    const row = [
+                        skill.toUpperCase(),
+                        `"${t.date || ''}"`,
+                        `"${t.title.replace(/"/g, '""')}"`,
+                        `"${(t.category || '').replace(/"/g, '""')}"`,
+                        `"${(t.target || '').replace(/"/g, '""')}"`,
+                        t.duration || 30,
+                        t.status || 'TODO',
+                        `"${(t.notes || '').replace(/"/g, '""')}"`
+                    ].join(',');
+                    csvContent += row + "\n";
+                });
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `IELTS_Daily_Planner_${getTodayFormatted()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Đã xuất file CSV Google Sheets thành công!');
+        }
+
+        function resetDataToDefault() {
+            plannerData = JSON.parse(JSON.stringify(initialPlannerData));
+            renderAllSheets();
+            showToast('Đã khôi phục dữ liệu planner mẫu ban đầu!');
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('ielts_planner_data', JSON.stringify(plannerData));
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function initCharts() {
+            const barCtx = document.getElementById('skillsBarChart').getContext('2d');
+            const radarCtx = document.getElementById('skillsRadarChart').getContext('2d');
+
+            // Bar Chart Configuration
+            barChartInstance = new Chart(barCtx, {
+                type: 'bar',
+                data: getBarChartData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => ` Hoàn thành: ${context.raw}%`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: (val) => val + '%'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Radar Chart Configuration
+            radarChartInstance = new Chart(radarCtx, {
+                type: 'radar',
+                data: getRadarChartData(),
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: '#e2e8f0' },
+                            grid: { color: '#f1f5f9' },
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            ticks: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function getBarChartData() {
+            const skills = ['reading', 'listening', 'writing', 'speaking'];
+            const pcts = skills.map(s => {
+                const tasks = plannerData[s] || [];
+                const done = tasks.filter(t => t.completed || t.status === 'DONE').length;
+                return tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
+            });
+
+            return {
+                labels: ['📖 Reading', '🎧 Listening', '✍️ Writing', '🗣️ Speaking'],
+                datasets: [{
+                    label: 'Tỷ lệ hoàn thành %',
+                    data: pcts,
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(244, 63, 94, 0.85)'
+                    ],
+                    borderRadius: 6,
+                    borderWidth: 0
+                }]
+            };
+        }
+
+        function getRadarChartData() {
+            const skills = ['reading', 'listening', 'writing', 'speaking'];
+            const durationData = skills.map(s => {
+                const tasks = plannerData[s] || [];
+                return tasks.reduce((sum, t) => sum + (parseInt(t.duration) || 0), 0);
+            });
+
+            return {
+                labels: ['Reading (Phút)', 'Listening (Phút)', 'Writing (Phút)', 'Speaking (Phút)'],
+                datasets: [{
+                    label: 'Thời lượng phân bổ',
+                    data: durationData,
+                    backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                    borderColor: 'rgba(79, 70, 229, 1)',
+                    pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                    borderWidth: 2
+                }]
+            };
+        }
+
+        function updateCharts() {
+            if (barChartInstance && radarChartInstance) {
+                barChartInstance.data = getBarChartData();
+                barChartInstance.update();
+
+                radarChartInstance.data = getRadarChartData();
+                radarChartInstance.update();
+            }
+        }
+    </script>
+</body>
+</html>
